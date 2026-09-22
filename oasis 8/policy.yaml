@@ -1,0 +1,76 @@
+# ============================================================================
+# ACCESS POLICY
+#
+# The administrator edits this file. No code changes needed.
+# After editing, restart the server:  uvicorn server:app --port 8000
+#
+# Document classifications can also be changed from the Documents tab in the
+# app, which writes back to this file.
+# ============================================================================
+
+# ---------------------------------------------------------------- levels
+# Lowest first. A user can retrieve their own level and everything below it.
+# Add a level here and it becomes available everywhere - no code changes.
+levels:
+  - public
+  - internal
+  - restricted
+
+# What each level is called on screen.
+level_labels:
+  public:     Public
+  internal:   Internal
+  restricted: Restricted
+
+# ---------------------------------------------------------------- accounts
+# clearance   which documents this person can retrieve
+# can_upload  may add documents to the searchable library
+accounts:
+  admin:
+    password:   "123"
+    name:       R. Sharma
+    role:       Administrator
+    clearance:  restricted
+    label:      Full access
+    can_upload: true
+
+  employee:
+    password:   "123"
+    name:       A. Menon
+    role:       Employee
+    clearance:  internal
+    label:      Internal access
+    can_upload: false
+
+  contractor:
+    password:   "123"
+    name:       Field Contractor
+    role:       Contractor
+    clearance:  public
+    label:      Public access
+    can_upload: false
+
+# ---------------------------------------------------------------- documents
+# Which classification each document carries. Filenames must match exactly.
+# Anything not listed here uses default_level.
+default_level: internal
+
+documents:
+  # templates - the organisation's own document formats, public to all
+  template_approval_note.pdf: public
+  template_letter.pdf:        public
+  template_report.pdf:        public
+  template_deck.pptx:         public
+  # plant records
+  maintenance_workbook.xlsx:  internal
+  hazop_report.pdf:           restricted
+  inspection_report_2026.pdf: restricted
+  maintenance_log_p101.pdf:   internal
+  pump_manual_p101.pdf:       internal
+  sop_seal_replacement.pdf:   public
+
+# ---------------------------------------------------------------- retrieval
+retrieval:
+  chunk_size:    800      # characters per chunk
+  chunk_overlap: 100      # so a sentence split across a boundary is not lost
+  top_k:         5        # passages returned per question

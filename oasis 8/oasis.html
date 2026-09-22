@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OASIS</title>
+<style>
+:root{
+  --bg:#FBFAFE; --surface:rgba(255,255,255,.74); --raise:rgba(255,255,255,.86);
+  --sunk:rgba(250,248,254,.9);
+  --line:rgba(150,132,205,.24); --line2:rgba(138,116,204,.4);
+  --ink:#14111F; --ink2:#14111F; --ink3:#221E33;
+  --faint:#A9A3C0;   /* type-ahead preview and disabled controls only */
+  --acc:#8B7BD8; --acc-ink:#6A57C4; --acc-soft:rgba(139,123,216,.11);
+  --bad:#C4564E; --bad-soft:rgba(196,86,78,.09);
+  --r:14px;        /* panels and cards */
+  --r2:9px;        /* controls: buttons, inputs, list rows */
+  --r3:4px;        /* data tags, level chips - nearly square */
+  --glow:0 0 24px rgba(139,123,216,.2);
+  --glow2:0 0 46px rgba(139,123,216,.16);
+  --grid:rgba(139,123,216,.05);
+  --on-acc:#FFFFFF;
+  --solid:#FFFFFF;
+}
+[data-t="dark"]{
+  --bg:#020809; --surface:rgba(10,20,22,.72); --raise:rgba(8,17,19,.82);
+  --sunk:rgba(6,14,16,.9);
+  --line:rgba(45,110,112,.28); --line2:rgba(64,190,185,.4);
+  --ink:#F2FAFA; --ink2:#F2FAFA; --ink3:#D3E8E9;
+  --faint:#4A6A6C;
+  --acc:#2FE3D2; --acc-ink:#5CEFE0; --acc-soft:rgba(47,227,210,.09);
+  --bad:#FF7A70; --bad-soft:rgba(255,122,112,.09);
+  --glow:0 0 24px rgba(47,227,210,.18);
+  --glow2:0 0 46px rgba(47,227,210,.13);
+  --grid:rgba(47,227,210,.045);
+  --on-acc:#001A16;
+  --solid:#071214;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);min-height:100vh;
+  font:400 15px/1.65 -apple-system,'SF Pro Text','Segoe UI Variable Text','Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;transition:background .3s,color .3s;
+  position:relative;overflow-x:hidden}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input{font:inherit;color:inherit}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace}
+
+/* ---- atmospheric background ---- */
+#bgfx{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:1;
+  transition:opacity .45s}
+#bgfx canvas{width:100%;height:100%;display:block}
+#grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),
+                   linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:64px 64px}
+#login,#app{position:relative;z-index:2}
+
+/* ---- controls ---- */
+.ctl{position:fixed;top:1.1rem;right:1.3rem;z-index:60;display:flex;gap:.55rem}
+.cbtn.icon-only{padding:.42rem .55rem;gap:0}
+.cbtn{height:44px;padding:0 1rem;border-radius:11px;border:1px solid var(--line2);
+  background:var(--surface);display:flex;align-items:center;gap:.5rem;
+  font-size:13px;font-weight:500;color:var(--ink2);backdrop-filter:blur(12px);
+  transition:.18s}
+.cbtn:hover{color:var(--acc-ink);border-color:var(--acc);}
+.cbtn.on{color:var(--acc-ink);border-color:var(--acc);background:var(--acc-soft);
+  }
+.cbtn .ic{font-size:16px;line-height:1}
+
+/* ---- login ---- */
+#login{min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:2rem}
+.mark{width:46px;height:46px;border-radius:13px;background:var(--acc);
+  display:flex;align-items:center;justify-content:center;margin-bottom:1.4rem;
+  box-shadow:var(--glow2)}
+.mark svg{width:24px;height:24px}
+#login h1{font-size:31px;font-weight:600;letter-spacing:-.008em;margin-bottom:.4rem}
+#login p.lede{color:var(--ink2);font-size:12px;margin-bottom:2.3rem;
+  letter-spacing:.01em;font-weight:500}
+
+.roles{display:flex;gap:12px;margin-bottom:1.6rem;flex-wrap:wrap;justify-content:center;max-width:740px}
+.role{width:225px;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);padding:1.2rem;text-align:left;transition:.2s;
+  backdrop-filter:blur(12px)}
+.role:hover{border-color:var(--line2);transform:translateY(-2px)}
+.role.on{border-color:var(--acc);background:var(--acc-soft);box-shadow:var(--glow)}
+.role .rn{font-size:15.5px;font-weight:600;margin-bottom:.3rem;letter-spacing:0}
+.role .rd{font-size:12.5px;color:var(--ink3);line-height:1.55}
+.role .rc{display:inline-block;margin-top:.7rem;font-size:10px;font-weight:600;
+  border:1px solid var(--line2);border-radius:5px;padding:2px 9px;color:var(--ink2);
+  letter-spacing:.01em;}
+.role.on .rc{border-color:var(--acc);color:var(--acc-ink)}
+
+.creds{width:490px;max-width:100%}
+.creds input{width:100%;background:var(--surface);border:1px solid var(--line);
+  border-radius:10px;padding:.72rem .9rem;font-size:14px;margin-bottom:.6rem;
+  outline:none;backdrop-filter:blur(12px);transition:.18s}
+.creds input:focus{border-color:var(--acc);}
+.go{width:100%;background:var(--acc);color:var(--on-acc);border-radius:10px;padding:.78rem;
+  font-size:14px;font-weight:600;transition:.2s;letter-spacing:.02em}
+.go:hover:not(:disabled){box-shadow:var(--glow2);filter:brightness(1.08)}
+.go:disabled{background:var(--line2);color:var(--faint);cursor:not-allowed}
+.err{color:var(--bad);font-size:13px;margin-top:.6rem;min-height:1.1rem}
+.hint{color:var(--ink3);font-size:11.5px;margin-top:1rem;text-align:center}
+
+/* ---- app ---- */
+#app{display:none;min-height:100vh;flex-direction:column}
+.top{display:flex;align-items:center;justify-content:space-between;
+  padding:.9rem 1.5rem;border-bottom:1px solid var(--line)}
+.lt{display:flex;align-items:center;gap:.65rem}
+.dot{width:30px;height:30px;border-radius:9px;background:var(--acc);
+  display:flex;align-items:center;justify-content:center;}
+.dot svg{width:16px;height:16px}
+.tname{font-size:14.5px;font-weight:600;letter-spacing:0}
+.rt{display:flex;align-items:center;gap:.8rem;padding-right:14rem}
+.who{font-size:12.5px;color:var(--ink2)}
+.who b{color:var(--ink);font-weight:600}
+.chip{font-size:10px;border:1px solid var(--line2);border-radius:var(--r3);padding:3px 9px;
+  color:var(--acc-ink);font-weight:600;letter-spacing:.01em;}
+.signout{font-size:12.5px;color:var(--ink3);padding:.3rem .2rem}
+.signout:hover{color:var(--acc-ink)}
+
+.body{flex:1;display:flex;min-height:0}
+.side{width:222px;flex-shrink:0;border-right:1px solid var(--line);
+  padding:1rem .7rem;display:flex;flex-direction:column;gap:.55rem;overflow-y:auto}
+.newchat{font:inherit;font-size:12.5px;font-weight:600;padding:.5rem .7rem;
+  border:1px solid var(--line);border-radius:8px;background:var(--surface);
+  color:var(--ink2);cursor:pointer;text-align:left;transition:.15s}
+.newchat:hover{border-color:var(--acc);color:var(--acc-ink)}
+.sidelab{font-size:10px;letter-spacing:.01em;
+  color:var(--ink3);margin-top:.5rem;padding-left:.2rem}
+.chatlist{display:flex;flex-direction:column;gap:2px}
+.chatitem{font:inherit;font-size:12.5px;text-align:left;border:0;cursor:pointer;
+  background:transparent;color:var(--ink2);padding:.42rem .55rem;border-radius:7px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:.12s}
+.chatitem:hover{background:var(--surface)}
+.chatitem.on{background:var(--acc-soft);color:var(--acc-ink);font-weight:600}
+.chatitem .w{font-size:10px;color:var(--ink3);margin-left:.4rem}
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:2rem 1.5rem 3rem}
+.stage.busy{justify-content:flex-start;padding-top:2rem}
+.core{width:100%;max-width:740px}
+.hello{font-size:32px;font-weight:600;letter-spacing:-.008em;text-align:center;
+  margin-bottom:.5rem}
+.hello em{font-style:normal;color:var(--acc-ink)}
+.hsub{color:var(--ink2);font-size:13.5px;text-align:center;margin-bottom:2.1rem;
+  line-height:1.6}
+.stage.busy .hello{font-size:19px;margin-bottom:.15rem;text-align:left}
+.stage.busy .hsub{display:none}
+
+.composer{position:relative;background:var(--surface);border:1px solid var(--line2);border-radius:15px;
+  padding:.5rem .55rem .5rem 1rem;display:flex;align-items:center;gap:.55rem;
+  backdrop-filter:blur(14px);transition:.2s}
+.composer:focus-within{border-color:var(--acc);box-shadow:var(--glow2)}
+.qwrap{flex:1;position:relative;display:flex;align-items:center}
+.composer input{width:100%;border:none;outline:none;background:none;font-size:15px;
+  padding:.55rem 0;position:relative;z-index:2}
+.composer input::placeholder{color:transparent}
+#ghost{position:absolute;left:0;top:0;height:100%;display:flex;align-items:center;
+  font-size:15px;color:var(--faint);pointer-events:none;white-space:pre;z-index:1}
+#ghost b{color:transparent;font-weight:400}
+.tabkey{margin-left:.55rem;border:1px solid var(--line2);border-radius:5px;
+  padding:1px 6px;font-size:10px;color:var(--ink3);letter-spacing:.06em}
+.plus,.send{width:36px;height:36px;border-radius:10px;display:flex;
+  align-items:center;justify-content:center;flex-shrink:0;transition:.18s}
+.plus{border:1px solid var(--line);color:var(--ink2);font-size:19px;line-height:1}
+.plus:hover{border-color:var(--acc);color:var(--acc-ink);}
+.plus.has{border-color:var(--acc);color:var(--acc-ink);background:var(--acc-soft)}
+.send{background:var(--acc);color:var(--on-acc);font-size:15px}
+.send.stop{background:var(--bad);color:#fff;font-size:13px}
+.send.stop::after{content:"";width:9px;height:9px;background:currentColor;
+  border-radius:2px}
+.send.stop{font-size:0}
+.send:hover:not(:disabled){}
+.send:disabled{background:var(--line2);color:var(--faint)}
+.srcrow{display:flex;align-items:center;gap:.6rem;margin-top:.8rem}
+.srclab{font-size:11px;color:var(--ink3);letter-spacing:.02em}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.sg{font:inherit;font-size:11.5px;padding:.3rem .7rem;border:0;cursor:pointer;
+  background:transparent;color:var(--ink3);transition:.15s}
+.sg:hover{color:var(--ink2)}
+.sg.on{background:var(--acc-soft);color:var(--acc-ink);font-weight:600}
+.thumb{display:block;flex-basis:100%;width:100%;max-width:100%;height:auto;
+  margin-top:.45rem;border:1px solid var(--line);
+  border-radius:6px;background:#fff}
+.lvl.tbl{border-color:var(--line2);color:var(--ink3)}
+.mlist{margin:.2rem 0 .1rem;display:flex;flex-direction:column;gap:2px}
+.mrow{display:flex;justify-content:space-between;gap:.6rem;font-size:10.5px;
+  color:var(--ink3);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.mrow .mn{color:var(--ink2)}
+.mrow .md.none{color:var(--bad)}
+#corrn{margin-left:.3rem;font-size:9.5px;background:var(--bad);color:#fff;
+  border-radius:8px;padding:0 5px}
+#corrn:empty{display:none}
+.citem{border:1px solid var(--line);border-radius:var(--r2);padding:.7rem;
+  margin-bottom:.55rem;font-size:12px}
+.citem .cq{font-weight:600;margin-bottom:.25rem}
+.citem .cw{color:var(--ink2);margin:.2rem 0}
+.citem textarea{width:100%;font:inherit;font-size:12px;min-height:46px;
+  border:1px solid var(--line);border-radius:var(--r3);padding:.4rem;
+  background:var(--bg);color:var(--ink);margin:.35rem 0}
+.citem .row{display:flex;gap:.35rem;align-items:center;flex-wrap:wrap}
+.citem select{font:inherit;font-size:11.5px;padding:.25rem;
+  border:1px solid var(--line);border-radius:var(--r3);background:var(--bg);
+  color:var(--ink)}
+.appr pre.code{margin:.6rem 0 .5rem;max-height:260px;overflow:auto}
+.slidep{margin:.6rem 0 .5rem;max-height:250px;overflow:auto;
+  border:1px solid var(--line);border-radius:var(--r2);padding:.55rem .7rem}
+.slidep .sl{font-size:12px;margin-bottom:.45rem}
+.slidep .sl:last-child{margin-bottom:0}
+.slidep ul{margin:.15rem 0 0 1rem;color:var(--ink2)}
+.slidep li{margin:.1rem 0}
+.pill{font-size:9.5px;border:1px solid var(--acc);color:var(--acc-ink);
+  border-radius:var(--r3);padding:0 5px;margin-left:.4rem}
+.limits{font-size:10.5px;color:var(--ink3);margin-bottom:.6rem}
+.sqlq{font-size:11.5px;color:var(--ink3);font-family:ui-monospace,Menlo,monospace;
+  margin-top:.45rem}
+.flagb{font:inherit;font-size:10.5px;border:1px solid var(--line);
+  background:transparent;color:var(--ink3);border-radius:var(--r3);
+  padding:3px 9px;cursor:pointer}
+.flagb:hover{border-color:var(--acc);color:var(--acc-ink)}
+.flagbox{border:1px solid var(--line);border-radius:var(--r2);padding:.8rem;
+  margin-top:.6rem;background:var(--surface)}
+.flagbox textarea{width:100%;font:inherit;font-size:13px;border:1px solid var(--line);
+  border-radius:var(--r3);padding:.45rem .6rem;background:var(--bg);
+  color:var(--ink);resize:vertical;min-height:42px;margin-bottom:.45rem}
+.flagbox .row{display:flex;gap:.4rem;align-items:center}
+.corr{border-left:3px solid var(--acc);padding:.5rem .75rem;margin:.45rem 0;
+  background:var(--acc-soft);border-radius:var(--r3);font-size:12.5px}
+.corr b{font-weight:600}
+.dcol{font-size:10.5px;color:var(--ink3);white-space:nowrap}
+.dcol.assumed{opacity:.75;font-style:italic}
+.chart{display:block;width:100%;max-width:640px;margin:.7rem 0 .55rem;
+  border:1px solid var(--line);border-radius:9px;background:#fff}
+.ans.mk{border-left:3px solid #b8860b;padding-left:.8rem}
+.att{margin-top:.6rem}
+.att:empty{margin-top:0}
+.chipf{position:relative;display:inline-flex;align-items:center;gap:.6rem;
+  border:1px solid var(--line);border-radius:10px;background:var(--surface);
+  padding:.5rem .8rem .5rem .55rem;max-width:330px}
+.chipf .thumbw{width:38px;height:38px;border-radius:7px;overflow:hidden;
+  flex-shrink:0;background:var(--acc-soft);display:flex;align-items:center;
+  justify-content:center}
+.chipf .thumbw img{width:100%;height:100%;object-fit:cover}
+.chipf .ext{font-size:9.5px;font-weight:700;letter-spacing:.04em;
+  color:var(--acc-ink)}
+.chipf .fmeta{min-width:0}
+.chipf .fname{font-size:12.5px;font-weight:500;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.chipf .fsub{font-size:10.5px;color:var(--ink3);margin-top:1px}
+.chipf .x{position:absolute;top:-7px;right:-7px;width:19px;height:19px;
+  border-radius:50%;border:1px solid var(--line);background:var(--bg);
+  color:var(--ink2);font-size:12px;line-height:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;padding:0}
+.chipf .x:hover{border-color:var(--bad);color:var(--bad)}
+.sugg{position:absolute;top:calc(100% + 7px);left:0;right:0;z-index:60;
+  background:var(--solid);border:1px solid var(--line);border-radius:var(--r2);
+  overflow:hidden;display:none;box-shadow:0 8px 28px rgba(26,22,48,.10)}
+.sugg.open{display:block}
+.sitem{display:flex;align-items:center;gap:.6rem;width:100%;text-align:left;
+  padding:.5rem .85rem;font-size:14px;color:var(--ink2);
+  border-bottom:1px solid var(--line)}
+.sitem:last-child{border-bottom:0}
+.sitem:hover,.sitem.cur{background:var(--acc-soft);color:var(--ink)}
+.sitem .ic{flex-shrink:0;width:13px;height:13px;opacity:.5}
+.sitem .tx{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sitem b{font-weight:600;color:var(--ink)}
+.chips{display:none}
+.chip-q{border:1px solid var(--line);background:var(--surface);border-radius:20px;
+  padding:.35rem .85rem;font-size:11.5px;color:var(--ink2);transition:.16s;
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip-q:hover{border-color:var(--acc);color:var(--acc-ink);}
+.chip-q.recent{border-style:dashed}
+.chips-lbl{font-size:10px;letter-spacing:.01em;
+  color:var(--ink3);width:100%;text-align:center;margin-top:.5rem;font-weight:500}
+
+.thread{width:100%;max-width:740px;margin-bottom:1.5rem}
+.turn{margin-bottom:1.8rem}
+.qline{font-size:16px;font-weight:500;margin-bottom:.8rem;letter-spacing:0}
+.meta{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.85rem}
+.tag{font-size:10.5px;border:1px solid var(--line);background:var(--surface);
+  border-radius:var(--r3);padding:3px 9px;color:var(--ink2);font-weight:500;
+  letter-spacing:.05em;backdrop-filter:blur(8px)}
+.tag.warn{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.tag.acc{background:var(--acc-soft);border-color:var(--acc);color:var(--acc-ink)}
+.ans{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:1.1rem 1.25rem;font-size:14.5px;line-height:1.78;backdrop-filter:blur(12px);
+  white-space:pre-wrap}
+/* inside rendered markup the source newlines are already structure, so the
+   pre-wrap that preserves them in plain prose must not double up */
+.ans ul.md,.ans ol.md{white-space:normal;margin:.5rem 0 .6rem;padding-left:1.35rem}
+.ans li{margin:.18rem 0}
+.ans pre.code{white-space:pre;overflow-x:auto;background:var(--raise);
+  border:1px solid var(--line);border-radius:var(--r2);padding:.75rem .9rem;
+  margin:.6rem 0;font-size:12.5px;line-height:1.55}
+.ans pre.code code{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.ans code.inl{background:var(--raise);border:1px solid var(--line);
+  border-radius:var(--r3);padding:.05rem .32rem;font-size:12.5px;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.ans strong{font-weight:600}
+.ans{}
+/* A refusal is a correct answer - the documents do not cover it, and saying
+   so is the behaviour we want. Red made it read as a failure. Mark it with a
+   quiet left rule instead, and let the tag carry the meaning. */
+.ans.ref{border-left:3px solid var(--line2);
+  box-shadow:none}
+.steps{margin-bottom:.7rem;border-left:2px solid var(--line2);padding-left:.7rem}
+.step{font-size:11px;color:var(--ink3);padding:.16rem 0;
+  font-family:ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.step b{color:var(--acc-ink);font-weight:500}
+.dl{display:inline-block;margin-top:.5rem;font-size:12.5px;color:var(--acc-ink);
+  border:1px solid var(--acc);border-radius:8px;padding:.32rem .9rem;
+  background:var(--acc-soft);text-decoration:none}
+.dl:hover{}
+
+.srcs{margin-top:.95rem}
+.srcs h4{font-size:10px;letter-spacing:.01em;
+  color:var(--ink3);font-weight:600;margin-bottom:.5rem}
+.src{font-size:11.5px;color:var(--ink2);padding:.34rem 0;
+  border-bottom:1px solid var(--line)}
+.src b{color:var(--ink);font-weight:500}
+.appr{margin-top:1rem;background:var(--acc-soft);border:1px solid var(--acc);
+  border-radius:var(--r);padding:.95rem 1.15rem;display:flex;align-items:center;
+  justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+.appr .t{font-size:13.5px;color:var(--ink)}
+.bt{border:1px solid var(--line2);background:var(--surface);border-radius:8px;
+  padding:.38rem 1rem;font-size:12.5px;margin-left:.45rem}
+.bt.p{background:var(--acc);color:var(--on-acc);border-color:var(--acc);font-weight:600}
+
+/* ---- rail ---- */
+.rail{width:0;border-left:1px solid transparent;overflow:hidden;transition:.25s;
+  flex-shrink:0}
+.rail.open{width:312px;border-left-color:var(--line);background:var(--raise);
+  backdrop-filter:blur(18px)}
+.rin{width:312px;padding:1.4rem 1.3rem}
+.rtabs{display:flex;gap:.4rem;margin-bottom:1.25rem}
+.rtab{flex:1;border:1px solid var(--line);border-radius:8px;padding:.45rem .2rem;
+  font-size:10.5px;color:var(--ink2);background:var(--surface);font-weight:500;
+  transition:.18s}
+.rtab.on{border-color:var(--acc);color:var(--acc-ink);background:var(--acc-soft);
+  }
+.rsec{display:none} .rsec.on{display:block}
+.rh{font-size:10px;letter-spacing:.01em;color:var(--ink3);
+  font-weight:600;margin-bottom:.8rem}
+.kv{display:flex;justify-content:space-between;padding:.45rem 0;font-size:12.5px;
+  border-bottom:1px solid var(--line)}
+.kv .k{color:var(--ink2)}
+.kv .v{font-size:11.5px;font-weight:500}
+.v.ok{color:var(--acc-ink)} .v.bad{color:var(--bad)}
+.lg{font-size:11.5px;color:var(--ink2);padding:.32rem 0;border-bottom:1px solid var(--line)}
+.lg i{color:var(--ink3);font-style:normal;margin-right:.5rem}
+.vbtn{width:100%;border:1px solid var(--line2);border-radius:9px;padding:.5rem;
+  font-size:12.5px;background:var(--surface);color:var(--ink2);margin-top:1rem}
+.vbtn:hover{border-color:var(--acc);color:var(--acc-ink);}
+.vres{font-size:11.5px;margin-top:.55rem;text-align:center}
+
+.drow{display:flex;justify-content:space-between;align-items:center;gap:.5rem;
+  padding:.45rem 0;border-bottom:1px solid var(--line);font-size:12px}
+.dname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+.dmeta{color:var(--ink3);font-size:10.5px;flex-shrink:0}
+.lvl{border-radius:var(--r3);font-size:9.5px;font-weight:600;letter-spacing:.07em;
+  border-radius:4px;padding:2px 7px;flex-shrink:0;border:1px solid var(--line2);
+  color:var(--ink2)}
+.lvl.restricted{border-color:var(--bad);color:var(--bad);background:var(--bad-soft)}
+.lvl.internal{border-color:var(--line2);color:var(--ink2)}
+.lvl.public{border-color:var(--acc);color:var(--acc-ink);background:var(--acc-soft)}
+
+/* The chart thumbnail is a child of this row and is full width, so on a flex
+   line it pushed the row past the panel edge. Let the row wrap and give the
+   thumbnail its own line. */
+.arow{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.5rem;
+  max-width:100%;overflow:hidden;
+  padding:.5rem 0;border-bottom:1px solid var(--line)}
+.aname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;
+  min-width:0;flex:1 1 auto;
+  color:var(--ink)}
+.awhen{font-size:10.5px;color:var(--ink3);flex-shrink:0}
+.akind{font-size:9.5px;font-weight:600;letter-spacing:.07em;
+  border:1px solid var(--acc);color:var(--acc-ink);background:var(--acc-soft);
+  border-radius:4px;padding:2px 6px;flex-shrink:0}
+.adl{font-size:11px;color:var(--acc-ink);text-decoration:none;flex-shrink:0;
+  border:1px solid var(--line2);border-radius:6px;padding:2px 8px}
+.adl:hover{border-color:var(--acc);}
+
+.drop{border:1px dashed var(--line2);border-radius:10px;padding:1rem .8rem;
+  text-align:center;font-size:12px;color:var(--ink3);cursor:pointer;
+  transition:.18s;margin-bottom:.8rem}
+.drop:hover,.drop.over{border-color:var(--acc);color:var(--acc-ink);
+  background:var(--acc-soft)}
+.drop b{display:block;color:var(--ink);font-size:12.5px;font-weight:500;
+  margin-bottom:.15rem}
+.lvlpick{display:flex;gap:.35rem;margin-bottom:.8rem}
+.lvlbtn{flex:1;border:1px solid var(--line);border-radius:8px;padding:.42rem .2rem;
+  font-size:10.5px;font-weight:500;color:var(--ink2);background:var(--surface);
+  transition:.18s;letter-spacing:.03em}
+.lvlbtn:hover{border-color:var(--line2)}
+.lvlbtn.on{border-color:var(--acc);color:var(--acc-ink);background:var(--acc-soft);
+  }
+.ubtn{width:100%;background:var(--acc);color:var(--on-acc);border-radius:9px;
+  padding:.52rem;font-size:12.5px;font-weight:600}
+.ubtn:disabled{background:var(--line2);color:var(--ink3);cursor:not-allowed}
+.ures{font-size:11.5px;margin-top:.6rem;line-height:1.5}
+.locked{font-size:11.5px;color:var(--ink3);line-height:1.6;padding:.7rem .2rem}
+.spin{display:inline-block;width:10px;height:10px;border:2px solid var(--line2);
+  border-top-color:var(--acc);border-radius:50%;animation:sp .7s linear infinite;
+  vertical-align:-1px;margin-right:.3rem}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media(max-width:900px){.rail.open{width:100%;position:fixed;inset:0;z-index:50}
+  .rt{padding-right:0}.ctl{top:auto;bottom:1rem}}
+</style>
+</head>
+<body data-t="light">
+
+<div id="bgfx"><canvas id="wave"></canvas></div>
+<div id="grid"></div>
+
+<div class="ctl">
+  <button class="cbtn icon-only" id="rail-btn" title="Menu"
+          aria-label="Menu" style="display:none"><span class="ic">&#9776;</span></button>
+  <button class="cbtn" id="tgl"><span class="ic" id="tgl-ic">&#9789;</span> <span id="tgl-tx">Dark</span></button>
+</div>
+
+<div id="login">
+  <div class="mark">
+    <svg viewBox="0 0 24 24" fill="none" stroke="var(--on-acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2 4 6v6c0 5 3.4 9.1 8 10 4.6-.9 8-5 8-10V6l-8-4z"/><path d="M9 12l2 2 4-4"/>
+    </svg>
+  </div>
+  <h1>OASIS</h1>
+  <p class="lede">On-premise &middot; Air-gapped &middot; MRPL</p>
+  <div class="roles" id="roles"></div>
+
+  <div class="creds">
+    <input id="user" placeholder="Username" autocomplete="off">
+    <input id="pass" type="password" placeholder="Password" autocomplete="off">
+    <button class="go" id="go" disabled>Sign in</button>
+    <div class="err" id="err"></div>
+    <div class="hint">Select a role to fill the username, then enter your password.</div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="top">
+    <div class="lt">
+      <div class="dot">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--on-acc)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 4 6v6c0 5 3.4 9.1 8 10 4.6-.9 8-5 8-10V6l-8-4z"/><path d="M9 12l2 2 4-4"/>
+        </svg>
+      </div>
+      <div class="tname">OASIS</div>
+    </div>
+    <div class="rt">
+      <div class="who">Signed in as <b id="who">-</b></div>
+      <span class="chip" id="chip">-</span>
+      <button class="signout" id="signout">Sign out</button>
+    </div>
+  </div>
+
+  <div class="body">
+    <aside class="side" id="side">
+      <button class="newchat" id="newchat"
+        title="Start a new conversation. This one is kept in the list below.">+ New chat</button>
+      <div class="sidelab">Chats</div>
+      <div class="chatlist" id="chatlist"></div>
+    </aside>
+    <div class="stage" id="stage">
+      <div id="thread" class="thread"></div>
+      <div class="core">
+        <div class="hello" id="hello">Hello</div>
+        <div class="hsub">Ask about the plant, its equipment and its records.<br>Every answer is traced to a document and a page, at your clearance.</div>
+        <div class="composer">
+          <div class="qwrap">
+            <div id="ghost"></div>
+            <input id="q" autocomplete="off" spellcheck="false"
+                   role="combobox" aria-expanded="false" aria-controls="sugg">
+          </div>
+          <button class="plus" id="plus" title="Attach a document">+</button>
+          <button class="send" id="send">&#8594;</button>
+          <div class="sugg" id="sugg" role="listbox"></div>
+        </div>
+        <div class="srcrow">
+          <span class="srclab">Source</span>
+          <div class="seg" id="seg">
+            <button class="sg on" data-mode="documents"
+              title="Every claim comes from the plant's own documents. If they do not answer, the system says so.">Documents only</button>
+            <button class="sg" data-mode="assisted"
+              title="Documents first. If they do not answer a general question, the model may add its own knowledge, clearly marked. Anything about this plant still comes from the documents or not at all.">Documents + model</button>
+          </div>
+        </div>
+        <div class="att" id="att"></div>
+
+        <input type="file" id="file" accept=".pdf,.xlsx,.xlsm,.pptx,.potx,.png,.jpg,.jpeg" style="display:none">
+      </div>
+    </div>
+
+    <div class="rail" id="rail"><div class="rin">
+      <div class="rtabs">
+        <button class="rtab on" data-s="sov">Sovereignty</button>
+        <button class="rtab" data-s="led">Ledger</button>
+        <button class="rtab" data-s="docs">Documents</button>
+        <button class="rtab" data-s="corr">Corrections<span id="corrn"></span></button>
+        <button class="rtab" data-s="arte">Files</button>
+      </div>
+      <div class="rsec on" id="sov">
+        <div class="rh">Runtime state</div>
+        <div class="kv"><span class="k">Egress mode</span><span class="v mono">air-gapped</span></div>
+        <div class="kv"><span class="k">Bytes out</span><span class="v mono ok">0</span></div>
+        <div class="kv"><span class="k">Blocked attempts</span><span class="v mono bad" id="blk">3</span></div>
+        <div class="kv"><span class="k">Model digest</span><span class="v mono" id="mhash">-</span></div>
+        <div id="mlist" class="mlist"></div>
+        <div class="kv"><span class="k">Clock source</span><span class="v mono">NIC/NPL</span></div>
+      </div>
+      <div class="rsec" id="docs">
+        <div class="rh">Indexed library</div>
+        <div id="doclist"><div class="lg"><i>-</i>loading</div></div>
+
+        <div id="uploader" style="margin-top:1.1rem;display:none">
+          <div class="rh">Add a document</div>
+          <div class="drop" id="drop">
+            <b id="dropname">Choose a PDF or spreadsheet</b>
+            <span id="drophint">or drag one here</span>
+          </div>
+          <input type="file" id="upfile" accept=".pdf,.xlsx,.xlsm" style="display:none">
+          <div class="rh" style="margin-bottom:.5rem">Classification</div>
+          <div class="lvlpick">
+            <button class="lvlbtn" data-l="public">Public</button>
+            <button class="lvlbtn" data-l="internal">Internal</button>
+            <button class="lvlbtn" data-l="restricted">Restricted</button>
+          </div>
+          <button class="ubtn" id="ubtn" disabled>Add to library</button>
+          <div class="ures" id="ures"></div>
+        </div>
+
+        <div id="uplocked" class="locked" style="display:none">
+          Adding documents to the library is an administrative action. Your role
+          does not permit it. Attaching a file to a single question is still
+          available from the composer.
+        </div>
+      </div>
+
+      <div class="rsec" id="corr">
+        <div class="lg" id="corrlist"><i>-</i>nothing waiting</div>
+      </div>
+
+      <div class="rsec" id="arte">
+        <div class="rh">Generated this session</div>
+        <div id="artelist"><div class="lg"><i>-</i>nothing generated yet</div></div>
+        <div class="locked" style="padding-top:.9rem">
+          Files are written only after approval, and are held on this server.
+          Nothing is uploaded anywhere.
+        </div>
+      </div>
+
+      <div class="rsec" id="led">
+        <div class="rh">Recent entries</div>
+        <div id="ledrows"><div class="lg"><i>-</i>no entries yet</div></div>
+        <button class="vbtn" id="verify">Verify chain</button>
+        <div class="vres" id="vres"></div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<script>
+const API="http://localhost:8000";
+let ASKING=null;          // in-flight request, so it can be stopped
+let TOKEN=null, MODE="documents", FILE=null, CAN_UPLOAD=false, CAN_AUDIT=false, UPFILE=null, UPLEVEL=null;
+const $=id=>document.getElementById(id);
+
+/* ---------- flowing particle wave ---------- */
+(function(){
+  const c=$("wave"), x=c.getContext("2d");
+  let W,H,parts=[],t=0;
+  function size(){ W=c.width=innerWidth*devicePixelRatio; H=c.height=innerHeight*devicePixelRatio; }
+  size(); addEventListener("resize",size);
+  for(let i=0;i<1400;i++) parts.push({p:Math.random(),o:(Math.random()-.5)*150,
+    s:.00016+Math.random()*.00042,a:.1+Math.random()*.6,r:Math.random()*1.5+.25});
+  function curve(p){
+    const px=p*1.35-.18;
+    return { x:px*W, y:H*(.52+Math.sin(px*Math.PI*1.65)*.3+Math.sin(px*7.2)*.018) };
+  }
+  function draw(){
+    x.clearRect(0,0,W,H); t+=.0022;
+    for(const q of parts){
+      q.p+=q.s; if(q.p>1.05) q.p=-.05;
+      const pt=curve(q.p);
+      const sp=Math.sin(q.p*Math.PI);
+      const off=q.o*devicePixelRatio*(.45+sp*.9);
+      const yy=pt.y+off+Math.sin(t*2.4+q.p*11)*7*devicePixelRatio;
+      const fade=Math.min(1,sp*1.9);
+      const glow=Math.max(0,1-Math.abs(q.o)/110);
+      x.beginPath();
+      x.arc(pt.x,yy,q.r*devicePixelRatio*(1+glow*.8),0,6.283);
+      const dk=document.body.dataset.t==="dark";
+      const r=dk?40+glow*90:150-glow*30, g=dk?210+glow*40:132-glow*20,
+            b=dk?200+glow*45:220+glow*20;
+      x.fillStyle="rgba("+(r|0)+","+(g|0)+","+(b|0)+","+
+        (q.a*fade*(dk?.16+glow*.5:.20+glow*.55))+")";
+      x.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ---------- theme ---------- */
+$("tgl").onclick=()=>{
+  const d=document.body.dataset.t==="dark";
+  document.body.dataset.t=d?"light":"dark";
+  $("tgl-ic").innerHTML=d?"&#9789;":"&#9788;";
+  $("tgl-tx").textContent=d?"Dark":"Light";
+};
+
+/* ---------- login ---------- */
+const BLURB={
+  restricted:"Can retrieve every document, including restricted material, and may add new documents to the library.",
+  internal:"Can retrieve public and internal documentation. Restricted material is not returned.",
+  public:"Site access only. Internal and restricted documents are not retrievable.",
+};
+
+async function loadRoles(){
+  try{
+    const r=await fetch(API+"/roles");
+    const d=await r.json();
+    $("roles").innerHTML=d.roles.map(x=>
+      '<button class="role" data-u="'+esc(x.username)+'">'+
+      '<div class="rn">'+esc(x.role)+'</div>'+
+      '<div class="rd">'+esc(BLURB[x.clearance]||"")+'</div>'+
+      '<span class="rc">'+esc(x.label)+'</span></button>'
+    ).join("");
+    document.querySelectorAll(".role").forEach(b=>{
+      b.onclick=()=>{
+        document.querySelectorAll(".role").forEach(x=>x.classList.remove("on"));
+        b.classList.add("on"); $("user").value=b.dataset.u;
+        $("pass").focus(); chk();
+      };
+    });
+  }catch(e){
+    $("roles").innerHTML='<div class="hint">Cannot reach the server on port 8000. '+
+      'Start it with: uvicorn server:app --port 8000</div>';
+  }
+}
+loadRoles();
+function chk(){ $("go").disabled=!($("user").value&&$("pass").value); }
+$("user").oninput=chk; $("pass").oninput=chk;
+$("pass").onkeydown=e=>{ if(e.key==="Enter"&&!$("go").disabled) signIn(); };
+$("go").onclick=signIn;
+
+async function signIn(){
+  $("err").textContent="";
+  const fd=new FormData();
+  fd.append("username",$("user").value.trim());
+  fd.append("password",$("pass").value);
+  try{
+    const r=await fetch(API+"/login",{method:"POST",body:fd});
+    const d=await r.json();
+    if(!d.ok){ $("err").textContent=d.error||"Sign-in failed"; return; }
+    TOKEN=d.token; CAN_UPLOAD=!!d.can_upload; CAN_AUDIT=!!d.can_audit;
+    $("rail-btn").style.display="";          // only meaningful once signed in
+    /* the ledger names every actor and every filename - administrators only */
+    document.querySelector('.rtab[data-s="led"]').style.display=CAN_AUDIT?"":"none";
+    document.querySelector('.rtab[data-s="corr"]').style.display=CAN_AUDIT?"":"none";
+    if(!CAN_AUDIT){
+      $("led").classList.remove("on"); $("led").innerHTML="";
+      document.querySelectorAll(".rtab").forEach(x=>x.classList.remove("on"));
+      document.querySelectorAll(".rsec").forEach(x=>x.classList.remove("on"));
+      document.querySelector('.rtab[data-s="sov"]').classList.add("on");
+      $("sov").classList.add("on");
+    }
+    $("uploader").style.display=CAN_UPLOAD?"block":"none";
+    $("uplocked").style.display=CAN_UPLOAD?"none":"block";
+    $("who").textContent=d.name;
+    $("chip").textContent=d.label;
+    $("hello").innerHTML="Hello, <em>"+d.name.split(" ").slice(-1)[0]+"</em>";
+    $("login").style.display="none";
+    $("app").style.display="flex";
+    refresh(); loadSuggestions();
+  }catch(e){ $("err").textContent="Cannot reach the server. Is it running on port 8000?"; }
+}
+$("signout").onclick=()=>{
+  /* Signing out must always end at the login screen. Wrapped because a single
+     failing line here once left the user signed in with the button doing
+     nothing visible. */
+  try{ resetSession(); }catch(e){ console.error("sign out cleanup:", e); }
+  $("app").style.display="none"; $("login").style.display="flex";
+};
+
+function resetSession(){
+  TOKEN=null; FILE=null;
+  $("thread").innerHTML=""; FILE=null; $("file").value=""; drawAttachment();
+  $("stage").classList.remove("busy");
+  $("plus").classList.remove("has"); $("pass").value=""; chk();
+  $("rail").classList.remove("open"); $("rail-btn").classList.remove("on");
+  $("rail-btn").style.display="none";
+  MODE="documents";
+  document.querySelectorAll(".sg").forEach(x=>
+    x.classList.toggle("on", x.dataset.mode==="documents"));
+  CAN_UPLOAD=false; CAN_AUDIT=false; UPFILE=null; UPLEVEL=null; $("ures").innerHTML="";
+  document.querySelector('.rtab[data-s="led"]').style.display="";
+  RECENT=[]; closeSugg();
+  document.querySelectorAll(".lvlbtn").forEach(x=>x.classList.remove("on"));
+}
+
+/* ---------- rail ---------- */
+$("rail-btn").onclick=()=>{
+  const o=$("rail").classList.toggle("open");
+  $("rail-btn").classList.toggle("on",o);
+  if(o){ refresh(); loadDocs(); loadFiles(); loadChats(); loadCorrections(); }
+};
+/* ---------- chats ---------- */
+let CHAT="";
+
+function drawChats(list){
+  $("chatlist").innerHTML=(list||[]).map(c=>
+    '<button class="chatitem'+(c.id===CHAT?' on':'')+'" data-id="'+esc(c.id)+'">'+
+    esc(c.title)+'<span class="w">'+esc(c.when)+'</span></button>').join("");
+  $("chatlist").querySelectorAll(".chatitem").forEach(b=>{
+    b.onclick=()=>openChat(b.dataset.id);
+  });
+}
+
+async function loadChats(){
+  if(!TOKEN) return;
+  try{
+    const r=await fetch(API+"/chats?token="+encodeURIComponent(TOKEN));
+    const d=await r.json(); CHAT=d.current||""; drawChats(d.chats);
+  }catch(e){}
+}
+
+async function openChat(id){
+  const fd=new FormData(); fd.append("token",TOKEN); fd.append("chat",id);
+  const r=await fetch(API+"/open_chat",{method:"POST",body:fd});
+  if(!r.ok) return;
+  const d=await r.json();
+  CHAT=d.chat; drawChats(d.chats);
+  $("thread").innerHTML="";
+  (d.turns||[]).forEach(t=>{
+    const box=document.createElement("div"); box.className="turn";
+    $("thread").appendChild(box); render(box,t.question,t);
+  });
+  $("stage").classList.toggle("busy",(d.turns||[]).length>0);
+  RECENT=(d.turns||[]).map(t=>t.question).reverse().slice(0,3);
+  drawChips(); loadFiles();
+}
+
+$("newchat").onclick=async()=>{
+  const fd=new FormData(); fd.append("token",TOKEN);
+  const r=await fetch(API+"/new_chat",{method:"POST",body:fd});
+  const d=await r.json();
+  CHAT=d.chat; drawChats(d.chats);
+  $("thread").innerHTML=""; RECENT=[]; drawChips();
+  $("stage").classList.remove("busy");
+  loadFiles();
+};
+
+document.querySelectorAll(".sg").forEach(b=>{
+  b.onclick=()=>{
+    MODE=b.dataset.mode;
+    document.querySelectorAll(".sg").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on");
+  };
+});
+
+document.querySelectorAll(".rtab").forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll(".rtab").forEach(x=>x.classList.remove("on"));
+    document.querySelectorAll(".rsec").forEach(x=>x.classList.remove("on"));
+    t.classList.add("on"); $(t.dataset.s).classList.add("on");
+    if(t.dataset.s==="docs") loadDocs();
+    if(t.dataset.s==="arte") loadFiles();
+    if(t.dataset.s==="corr") loadCorrections();
+  };
+});
+
+/* ---------- ask ---------- */
+function drawAttachment(){
+  const box=$("att");
+  if(!FILE){ box.innerHTML=""; $("plus").classList.remove("has"); return; }
+  const ext=(FILE.name.split(".").pop()||"file").toUpperCase();
+  const kb=FILE.size<1024*1024
+    ? Math.max(1,Math.round(FILE.size/1024))+" KB"
+    : (FILE.size/1048576).toFixed(1)+" MB";
+  box.innerHTML=
+    '<div class="chipf"><div class="thumbw" id="thumbw">'+
+      '<span class="ext">'+esc(ext)+'</span></div>'+
+    '<div class="fmeta"><div class="fname">'+esc(FILE.name)+'</div>'+
+    '<div class="fsub">'+kb+' &middot; this question only</div></div>'+
+    '<button class="x" id="attx" title="Remove">&times;</button></div>';
+  $("attx").onclick=()=>{ FILE=null; $("file").value=""; drawAttachment(); };
+  $("plus").classList.add("has");
+  /* an image is worth showing as itself; everything else gets its extension */
+  if(/^image\//.test(FILE.type)){
+    const r=new FileReader();
+    r.onload=ev=>{ const w=$("thumbw");
+      if(w) w.innerHTML='<img src="'+ev.target.result+'" alt="">'; };
+    r.readAsDataURL(FILE);
+  }
+}
+
+$("plus").onclick=()=>$("file").click();
+$("file").onchange=e=>{
+  FILE=e.target.files[0]||null;
+  drawAttachment();          // owns the chip and the + button state
+};
+/* ---------- suggestions ---------- */
+let STARTERS=[], RECENT=[], SUG="";
+
+async function loadSuggestions(){
+  if(!TOKEN) return;
+  try{
+    const r=await fetch(API+"/suggestions?token="+encodeURIComponent(TOKEN));
+    const d=await r.json();
+    STARTERS=d.starters||[]; RECENT=d.recent||[];
+  }catch(e){}
+  drawChips();
+}
+
+let SUGI = -1;              // which suggestion is highlighted
+
+function suggestions(){
+  /* the session's own questions first - they are the likeliest repeat -
+     then the starters, with anything already offered filtered out */
+  const q = $("q").value.trim().toLowerCase();
+  const seen = new Set();
+  const all = [];
+  RECENT.slice(0, 3).forEach(t => {
+    if (!seen.has(t.toLowerCase())) { seen.add(t.toLowerCase());
+      all.push({text: t, recent: true}); }
+  });
+  STARTERS.forEach(t => {
+    if (!seen.has(t.toLowerCase())) { seen.add(t.toLowerCase());
+      all.push({text: t, recent: false}); }
+  });
+  return q ? all.filter(x => x.text.toLowerCase().includes(q)).slice(0, 7)
+           : all.slice(0, 7);
+}
+
+function mark(text, q){
+  if (!q) return esc(text);
+  const i = text.toLowerCase().indexOf(q.toLowerCase());
+  if (i < 0) return esc(text);
+  return esc(text.slice(0, i)) + "<b>" + esc(text.slice(i, i + q.length)) +
+         "</b>" + esc(text.slice(i + q.length));
+}
+
+const ICON_RECENT = '<svg class="ic" viewBox="0 0 16 16" fill="none" ' +
+  'stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/>' +
+  '<path d="M8 4.6V8l2.3 1.4"/></svg>';
+const ICON_ASK = '<svg class="ic" viewBox="0 0 16 16" fill="none" ' +
+  'stroke="currentColor" stroke-width="1.5"><circle cx="7.2" cy="7.2" r="4.6"/>' +
+  '<path d="M10.6 10.6 14 14"/></svg>';
+
+function drawChips(){
+  const box = $("sugg");
+  if (!box) return;
+  const list = suggestions();
+  if (!list.length || document.activeElement !== $("q")) { closeSugg(); return; }
+  const q = $("q").value.trim();
+  box.innerHTML = list.map((x, i) =>
+    '<button class="sitem' + (i === SUGI ? ' cur' : '') + '" role="option" ' +
+    'data-q="' + esc(x.text) + '">' +
+    (x.recent ? ICON_RECENT : ICON_ASK) +
+    '<span class="tx">' + mark(x.text, q) + '</span></button>').join("");
+  box.classList.add("open");
+  $("q").setAttribute("aria-expanded", "true");
+  box.querySelectorAll(".sitem").forEach(b => {
+    /* mousedown, not click: the input blurs first and would close the list */
+    b.onmousedown = e => {
+      e.preventDefault();
+      $("q").value = b.dataset.q; SUGI = -1;
+      closeSugg(); drawGhost(); $("q").focus();
+    };
+  });
+}
+
+function closeSugg(){
+  const box = $("sugg");
+  if (!box) return;
+  box.classList.remove("open");
+  box.innerHTML = "";
+  $("q").setAttribute("aria-expanded", "false");
+  SUGI = -1;
+}
+
+$("q").addEventListener("focus", () => drawChips());
+$("q").addEventListener("blur", () => setTimeout(closeSugg, 120));
+document.addEventListener("click", e => {
+  if (!e.target.closest(".qwrap")) closeSugg();
+});
+
+/* type-ahead: matches what you have typed, Tab accepts */
+function pickSuggestion(v){
+  if(!v) return "";
+  const low=v.toLowerCase();
+  const all=RECENT.concat(STARTERS);
+  return all.find(s=>s.toLowerCase().startsWith(low)&&s.length>v.length)||"";
+}
+function drawGhost(){
+  const v=$("q").value;
+  SUG=pickSuggestion(v);
+  if(!SUG){ $("ghost").innerHTML=""; return; }
+  $("ghost").innerHTML="<b>"+esc(v)+"</b>"+esc(SUG.slice(v.length))+
+    '<span class="tabkey">tab</span>';
+}
+$("q").oninput=()=>{ drawGhost(); drawChips(); };
+$("q").onfocus=drawGhost;
+
+$("send").onclick=()=>{
+  if(ASKING){ ASKING.abort(); return; }   // mid-request: the button is stop
+  ask();
+};
+$("q").onkeydown=e=>{
+  const open=$("sugg").classList.contains("open");
+  const n=$("sugg").querySelectorAll(".sitem").length;
+
+  if(open&&n&&(e.key==="ArrowDown"||e.key==="ArrowUp")){
+    e.preventDefault();
+    SUGI=e.key==="ArrowDown" ? (SUGI+1)%n : (SUGI<=0?n-1:SUGI-1);
+    drawChips();
+    return;
+  }
+  if(e.key==="Escape"&&open){ e.preventDefault(); closeSugg(); return; }
+  if(e.key==="Enter"&&open&&SUGI>=0){
+    e.preventDefault();
+    const pick=$("sugg").querySelectorAll(".sitem")[SUGI];
+    if(pick){ $("q").value=pick.dataset.q; closeSugg(); drawGhost(); }
+    return;
+  }
+
+  if(e.key==="Tab"&&SUG){ e.preventDefault(); $("q").value=SUG; drawGhost(); return; }
+  if(e.key==="ArrowRight"&&SUG&&$("q").selectionStart===$("q").value.length){
+    e.preventDefault(); $("q").value=SUG; drawGhost(); return; }
+  if(e.key==="Enter"){ closeSugg(); ask(); }
+};
+
+async function ask(){
+  const q=$("q").value.trim(); if(!q) return;
+  /* the button becomes stop. AbortController releases the interface at once;
+     the model finishes its current generation on the server regardless - see
+     the note in the README. */
+  ASKING = new AbortController();
+  $("send").classList.add("stop");
+  $("send").title = "Stop";
+  $("stage").classList.add("busy");
+  const box=document.createElement("div"); box.className="turn";
+  box.innerHTML='<div class="qline">'+esc(q)+'</div><div class="meta">'+
+    '<span class="tag"><span class="spin"></span><span id="phase">'+
+    'reading the question</span></span></div>';
+  /* The steps are not reported until the answer returns, so this cannot be a
+     live trace. It is an honest description of the order the agent works in,
+     paced to it - the point is that the wait is accounted for, not frozen. */
+  const PHASES=[[1600,"searching the documents"],
+                [7000,"reading the passages"],
+                [16000,"drafting the answer"],
+                [32000,"still working"]];
+  const timers=PHASES.map(([ms,label])=>setTimeout(()=>{
+    const el=box.querySelector("#phase"); if(el) el.textContent=label;
+  },ms));
+  const stopPhases=()=>timers.forEach(clearTimeout);
+  $("thread").appendChild(box); $("q").value=""; drawGhost();
+  const fd=new FormData();
+  fd.append("token",TOKEN); fd.append("question",q);
+  const sentMode=MODE; fd.append("mode", sentMode);
+  if(FILE) fd.append("file",FILE);
+  let d=null;
+  try{
+    const r=await fetch(API+"/ask",{method:"POST",body:fd,
+                                    signal:ASKING.signal});
+    d=await r.json();
+  }catch(e){
+    if(e && e.name === "AbortError"){
+      box.remove();                      // the turn was abandoned, not failed
+      if(!$("thread").children.length) $("stage").classList.remove("busy");
+    }else{
+      box.querySelector(".meta").innerHTML=
+        '<span class="tag warn">server unreachable</span>';
+    }
+  }
+  if(d){
+    /* the answer is drawn on its own. A failure updating the side panels is
+       not a failure to answer, and must not be reported as one. */
+    d.mode=sentMode;
+    try{ render(box,q,d); }
+    catch(e){ console.error("render failed:", e);
+      box.querySelector(".meta").innerHTML=
+        '<span class="tag warn">could not display the answer</span>'; }
+    try{
+      if(d.ledger) rows(d.ledger);
+      if(d.recent){ RECENT=d.recent; }
+      loadChats();
+    }catch(e){ console.error("panel refresh failed:", e); }
+  }
+  stopPhases();
+  FILE=null; $("file").value=""; drawAttachment();
+  ASKING=null; $("send").classList.remove("stop"); $("send").title="";
+  $("send").disabled=false;
+  drawChips();
+}
+
+/* the model ends such an answer with this line - a caveat belongs after
+   the answer, not before the reader has read a word */
+/* Models write Markdown whether or not you ask them to. Rendering a small,
+   fixed subset of it is more reliable than instructing them to stop, and it
+   cannot fail the way an instruction can.
+
+   ESCAPE FIRST, FORMAT SECOND. Every character is neutralised before any tag
+   is introduced, so nothing the model writes can become markup. Reversing
+   that order would be an injection hole in a system whose whole pitch is
+   that it can be trusted with confidential documents. */
+function fmt(raw){
+  if(!raw) return "";
+  let t = esc(String(raw));
+
+  /* fenced code first: its contents must not be touched by anything below,
+     and whitespace inside it is meaningful */
+  const blocks = [];
+  t = t.replace(/```([a-zA-Z0-9+#-]*)\n?([\s\S]*?)```/g, (m, lang, code) => {
+    blocks.push('<pre class="code"><code>' + code.replace(/\n$/, "") +
+                '</code></pre>');
+    return "\u0000BLOCK" + (blocks.length - 1) + "\u0000";
+  });
+
+  t = t.replace(/`([^`\n]+)`/g, '<code class="inl">$1</code>');
+  t = t.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+
+  /* lists: consecutive "- " or "1. " lines become one list */
+  const out = [];
+  let list = null;                       // "ul" | "ol" | null
+  for (const line of t.split("\n")) {
+    const bullet = line.match(/^\s*[-*]\s+(.*)$/);
+    const number = line.match(/^\s*\d+[.)]\s+(.*)$/);
+    const want = bullet ? "ul" : number ? "ol" : null;
+
+    if (want !== list) {
+      if (list) out.push("</" + list + ">");
+      if (want) out.push("<" + want + ' class="md">');
+      list = want;
+    }
+    if (want) out.push("<li>" + (bullet || number)[1] + "</li>");
+    else out.push(line);
+  }
+  if (list) out.push("</" + list + ">");
+
+  t = out.join("\n");
+  t = t.replace(/\u0000BLOCK(\d+)\u0000/g, (m, i) => blocks[i]);
+  /* the answer div keeps newlines so plain prose wraps as written; a newline
+     next to a block element would then show as an extra blank line on top of
+     the element's own margin */
+  t = t.replace(/\n*(<\/?(?:ul|ol|pre)\b[^>]*>)\n*/g, "$1");
+  return t.trim();
+}
+
+function wireFlag(box, q, d){
+  const btn = box.querySelector(".flagb");
+  if(!btn) return;
+  btn.onclick = () => {
+    if(box.querySelector(".flagbox")) return;
+    const f = document.createElement("div");
+    f.className = "flagbox";
+    f.innerHTML =
+      '<textarea class="fw" placeholder="What is wrong with this answer?"></textarea>'+
+      '<textarea class="fc" placeholder="What is the correct answer?"></textarea>'+
+      '<div class="row"><button class="bt p fsend">Send for review</button>'+
+      '<button class="bt fcancel">Cancel</button>'+
+      '<span class="dcol">An administrator reviews it. Nothing changes yet.</span></div>';
+    box.appendChild(f);
+    f.querySelector(".fcancel").onclick = () => f.remove();
+    f.querySelector(".fsend").onclick = async () => {
+      const fd = new FormData();
+      fd.append("token", TOKEN); fd.append("question", q);
+      fd.append("answer", d.answer || "");
+      fd.append("what_is_wrong", f.querySelector(".fw").value);
+      fd.append("correct_answer", f.querySelector(".fc").value);
+      fd.append("corrects", (d.sources && d.sources[0]) ? d.sources[0].document : "");
+      const r = await fetch(API+"/flag", {method:"POST", body:fd});
+      const res = await r.json();
+      f.innerHTML = '<span class="dcol">'+esc(res.message || res.error || "")+'</span>';
+    };
+  };
+}
+
+const MK=/\(?\s*knowledge\s+from\s+model\s+explicit(?:e)?ly\s*\)?\s*$/i;
+
+function render(box,q,d){
+  let t='<span class="tag">'+(d.mode==="assisted"?"documents + model":"documents only")+'</span>';
+  t+='<span class="tag">'+d.sources.length+' passages</span>';
+  if(MK.test((d.answer||'').trim())) t+='<span class="tag warn">model knowledge &middot; not from documents</span>';
+  if(d.excluded) t+='<span class="tag warn">'+d.excluded+' excluded by clearance</span>';
+  /* always name the model. Hiding it on a refusal made the row inconsistent
+     between answers, and which model declined is worth knowing. */
+  if(d.model_used) t+='<span class="tag acc">'+esc(d.model_used)+
+    ' &middot; '+esc(d.model_reason)+'</span>';
+  if(d.refused) t+='<span class="tag">not in the documents</span>';
+  // question first, answer immediately after it. The tags and the tool trace
+  // are supporting detail and belong below, not wedged in between.
+  /* A continuation has no new question of its own - it is the same request
+     carrying on after an approval. */
+  let h = q ? '<div class="qline">'+esc(q)+'</div>' : '';
+  h+='<div class="ans'+(d.refused?' ref':'')+(MK.test((d.answer||'').trim())?' mk':'')+'">'
+     +fmt(d.answer)+'</div>';
+  h+='<div class="meta">'+t+
+     '<button class="flagb" title="Report this answer as wrong">'+
+     'correct this</button></div>';
+  if(d.steps&&d.steps.length){
+    h+='<div class="steps">'+d.steps.map(s=>
+      '<div class="step"><b>'+esc(s.tool)+'</b> '+esc(String(s.result||''))+'</div>'
+    ).join("")+'</div>';
+  }
+  if(d.sources.length){
+    h+='<div class="srcs"><h4>Sources</h4>';
+    d.sources.forEach((s,i)=>{
+      const pg=s.page===null?"queried":"page "+s.page;
+      h+='<div class="src mono">['+(i+1)+'] <b>'+esc(s.document)+'</b> &middot; '+pg+'</div>';
+    });
+    h+='</div>';
+  }
+  if(d.pending_action){
+    const pa=d.pending_action;
+    let inner='<div class="t">Agent wants to <b>'+esc(pa.description)+'</b></div>';
+    /* Show the code. A person cannot meaningfully approve a program they have
+       not been shown, and the container it runs in is the other half of the
+       claim - both were invisible. */
+    /* Show what is being approved. "Agent wants to write a file" is not a
+       check on anything - the SQL is what a plant engineer can verify, and a
+       deck should show its slides before it exists. */
+    if(pa.sql && !pa.code){
+      inner+='<div class="sqlq">'+esc(pa.sql)+'</div>';
+    }
+    if(pa.slides && pa.slides.length){
+      inner+='<div class="slidep">'+pa.slides.map((sl,i)=>
+        '<div class="sl"><b>'+(i+1)+'. '+esc(sl.heading||"")+'</b>'+
+        (sl.image?'<span class="pill">chart</span>':'')+
+        ((sl.bullets&&sl.bullets.length)
+          ? '<ul>'+sl.bullets.map(b=>'<li>'+esc(b)+'</li>').join("")+'</ul>' : '')+
+        '</div>').join("")+'</div>';
+    }
+    if(pa.code){
+      if(pa.sql) inner+='<div class="sqlq">rows from: '+esc(pa.sql)+'</div>';
+      inner+='<pre class="code"><code>'+esc(pa.code)+'</code></pre>';
+      if(pa.sandbox) inner+='<div class="limits">runs in a container &middot; '+
+        esc(pa.sandbox)+'</div>';
+    }
+    inner+='<div><button class="bt p" data-ok="true">Approve</button>'+
+           '<button class="bt" data-ok="false">Reject</button></div>';
+    h+='<div class="appr">'+inner+'</div>';
+  }
+  box.innerHTML=h;
+  wireFlag(box, q, d);
+  box.querySelectorAll(".appr .bt").forEach(b=>{
+    b.onclick=async()=>{
+      /* Approving now runs the tool AND carries the turn on, so it can take as
+         long as a whole answer. Without feedback the button looks dead and
+         gets clicked again - and the second click finds nothing pending. */
+      const panel = b.closest(".appr");
+      panel.querySelectorAll(".bt").forEach(x=>{ x.disabled = true; });
+      b.textContent = b.dataset.ok === "true" ? "Working..." : "Discarding...";
+
+      const fd=new FormData();
+      fd.append("token",TOKEN); fd.append("action_id",d.pending_action.id);
+      fd.append("approved",b.dataset.ok);
+      const r=await fetch(API+"/approve",{method:"POST",body:fd});
+      const res=await r.json();
+      let inner = res.ran
+        ? '<div class="t">'+(res.ok?'Ran in the sandbox.':'The code failed.')+'</div>'+
+          '<pre class="code"><code>'+esc(res.stdout||res.message||"")+'</code></pre>'+
+          (res.sandbox?'<div class="limits">'+esc(res.sandbox)+'</div>':'')
+        : '<div class="t">'+esc(res.message)+'</div>';
+      if(res.file){
+        const url=API+'/download/'+encodeURIComponent(res.file)+
+                  '?token='+encodeURIComponent(TOKEN);
+        /* a chart is meant to be looked at, so show it rather than
+           making the reader download it to find out what it says */
+        if(/\.png$/i.test(res.file))
+          inner+='<img class="chart" src="'+url+'" alt="'+esc(res.file)+'">';
+        inner+='<a class="dl" href="'+url+'" download>Download '+esc(res.file)+'</a>';
+      }
+      panel.outerHTML='<div class="appr" style="display:block">'+inner+'</div>';
+      if(res.ledger) rows(res.ledger);
+      loadFiles();          // the panel showed a stale list until reopened
+
+      /* The turn may have carried on - a chart approved, then a deck proposed.
+         Render what came next, or the request appears to stop halfway. */
+      if(res.continued){
+        const more = document.createElement("div");
+        more.className = "turn";
+        box.parentNode.insertBefore(more, box.nextSibling);
+        render(more, "", res.continued);
+        more.scrollIntoView({behavior:"smooth", block:"nearest"});
+      }
+    };
+  });
+}
+function rows(L){
+  const box=$("ledrows");
+  if(!box) return;          // no Ledger tab: not an admin, or panel not open
+  box.innerHTML=L.slice().reverse().map(e=>
+    '<div class="lg"><i class="mono">'+String(e.seq).padStart(3,"0")+'</i>'+esc(e.event)+'</div>'
+  ).join("")||'<div class="lg"><i>-</i>no entries yet</div>';
+}
+/* ---------- generated files tab ---------- */
+async function loadFiles(){
+  if(!TOKEN) return;
+  try{
+    const r=await fetch(API+"/outputs?token="+encodeURIComponent(TOKEN));
+    const d=await r.json();
+    $("artelist").innerHTML=(d.files||[]).map(f=>
+      '<div class="arow"><span class="aname">'+esc(f.file)+'</span>'+
+      '<span class="awhen">'+esc(f.when)+'</span>'+
+      '<span class="akind">'+esc(f.kind)+'</span>'+
+      '<a class="adl" href="'+API+'/download/'+encodeURIComponent(f.file)+'?token='+encodeURIComponent(TOKEN)+
+      '" download>get</a>'+
+      (/\.png$/i.test(f.file)
+        ? '<img class="thumb" src="'+API+'/download/'+encodeURIComponent(f.file)+
+          '?token='+encodeURIComponent(TOKEN)+'" alt="">' : '')+
+      '</div>'
+    ).join("")||'<div class="lg"><i>-</i>nothing generated yet</div>';
+  }catch(e){}
+}
+
+/* ---------- corrections tab ---------- */
+async function loadCorrections(){
+  if(!TOKEN||!CAN_AUDIT) return;
+  try{
+    const r=await fetch(API+"/corrections?token="+encodeURIComponent(TOKEN));
+    if(!r.ok) return;
+    const d=await r.json();
+    $("corrn").textContent = d.pending.length || "";
+    $("corrlist").innerHTML = d.pending.length
+      ? d.pending.map(c=>
+          '<div class="citem" data-id="'+esc(c.id)+'">'+
+          '<div class="cq">'+esc(c.question)+'</div>'+
+          '<div class="cw">answered: '+esc((c.answer_given||"").slice(0,120))+'</div>'+
+          '<div class="cw"><b>wrong:</b> '+esc(c.what_is_wrong)+'</div>'+
+          '<textarea class="ce">'+esc(c.correct_answer)+'</textarea>'+
+          '<div class="row"><select class="cl">'+
+            d.levels.map(l=>'<option value="'+esc(l)+'">'+esc(l)+'</option>').join("")+
+          '</select>'+
+          '<button class="bt p capp">Approve</button>'+
+          '<button class="bt crej">Reject</button>'+
+          '<span class="dcol">raised by '+esc(c.raised_by)+'</span></div></div>').join("")
+      : '<div class="lg"><i>-</i>nothing waiting</div>';
+
+    $("corrlist").querySelectorAll(".citem").forEach(item=>{
+      const send=async ok=>{
+        const fd=new FormData();
+        fd.append("token",TOKEN); fd.append("id",item.dataset.id);
+        fd.append("approved", ok?"true":"false");
+        fd.append("sensitivity", item.querySelector(".cl").value);
+        fd.append("edited", item.querySelector(".ce").value);
+        const r=await fetch(API+"/review_correction",{method:"POST",body:fd});
+        const res=await r.json();
+        if(res.error){ item.querySelector(".row").innerHTML=
+          '<span class="dcol" style="color:var(--bad)">'+esc(res.error)+'</span>'; return; }
+        if(res.ledger) rows(res.ledger);
+        loadCorrections();
+      };
+      item.querySelector(".capp").onclick=()=>send(true);
+      item.querySelector(".crej").onclick=()=>send(false);
+    });
+  }catch(e){}
+}
+
+/* ---------- documents tab ---------- */
+async function loadDocs(){
+  if(!TOKEN) return;
+  try{
+    const r=await fetch(API+"/documents?token="+encodeURIComponent(TOKEN));
+    const d=await r.json();
+    if(d.error) return;
+    CAN_UPLOAD=!!d.can_upload;
+    $("uploader").style.display=CAN_UPLOAD?"block":"none";
+    $("uplocked").style.display=CAN_UPLOAD?"none":"block";
+    drawDocs(d.documents);
+  }catch(e){}
+}
+function drawDocs(list){
+  $("doclist").innerHTML=(list||[]).map(x=>
+    '<div class="drow"><span class="dname">'+esc(x.document)+'</span>'+
+    /* a spreadsheet is a queryable table, not chunked text - say so, or it
+       looks like a document that failed to index */
+    '<span class="dmeta">'+(x.kind==="table"?x.chunks+' rows':x.chunks+' chunks')+'</span>'+
+    (x.kind==="table"?'<span class="lvl tbl">table</span>':'')+
+    (x.effective?'<span class="dcol'+(x.date_source==="default"?' assumed':'')+
+      '">'+esc(x.effective)+(x.date_source==="default"?' (assumed)':'')+'</span>':'')+
+    '<span class="lvl '+esc(x.sensitivity)+'">'+esc(x.sensitivity)+'</span></div>'
+  ).join("")||'<div class="lg"><i>-</i>nothing indexed yet</div>';
+}
+
+$("drop").onclick=()=>$("upfile").click();
+$("drop").ondragover=e=>{ e.preventDefault(); $("drop").classList.add("over"); };
+$("drop").ondragleave=()=>$("drop").classList.remove("over");
+$("drop").ondrop=e=>{
+  e.preventDefault(); $("drop").classList.remove("over");
+  if(e.dataTransfer.files[0]) setUpFile(e.dataTransfer.files[0]);
+};
+$("upfile").onchange=e=>{ if(e.target.files[0]) setUpFile(e.target.files[0]); };
+
+function setUpFile(f){
+  UPFILE=f;
+  $("dropname").textContent=f.name;
+  $("drophint").textContent="ready to add";
+  $("ures").innerHTML="";
+  upState();
+}
+document.querySelectorAll(".lvlbtn").forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll(".lvlbtn").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on"); UPLEVEL=b.dataset.l; upState();
+  };
+});
+function upState(){ $("ubtn").disabled=!(UPFILE&&UPLEVEL); }
+
+$("ubtn").onclick=async()=>{
+  if(!UPFILE||!UPLEVEL) return;
+  $("ubtn").disabled=true;
+  $("ures").innerHTML='<span class="spin"></span>indexing';
+  const fd=new FormData();
+  fd.append("token",TOKEN); fd.append("level",UPLEVEL); fd.append("file",UPFILE);
+  try{
+    const r=await fetch(API+"/upload",{method:"POST",body:fd});
+    const d=await r.json();
+    if(d.error){
+      $("ures").innerHTML='<span style="color:var(--bad)">'+esc(d.error)+'</span>';
+    }else{
+      $("ures").innerHTML='<span style="color:var(--acc-ink)">'+esc(d.document)+
+        ' indexed as '+esc(d.level)+' &middot; '+d.chunks+' '+esc(d.unit||'chunks')+'</span>';
+      drawDocs(d.documents);
+      if(d.ledger) rows(d.ledger);
+      UPFILE=null; UPLEVEL=null;
+      $("upfile").value="";
+      $("dropname").textContent="Choose a PDF or spreadsheet";
+      $("drophint").textContent="or drag one here";
+      document.querySelectorAll(".lvlbtn").forEach(x=>x.classList.remove("on"));
+    }
+  }catch(e){
+    $("ures").innerHTML='<span style="color:var(--bad)">Upload failed. '+
+      'Is the server running?</span>';
+  }
+  upState();
+};
+
+$("verify").onclick=async()=>{
+  const r=await fetch(API+"/verify",{method:"POST"}); const d=await r.json();
+  $("vres").innerHTML=d.intact
+    ?'<span style="color:var(--acc-ink)">chain intact &middot; '+d.entries+' entries</span>'
+    :'<span style="color:var(--bad)">broken at entry '+d.broken_at+'</span>';
+};
+async function refresh(){
+  try{ const r=await fetch(API+"/status?token="+encodeURIComponent(TOKEN||"")); const d=await r.json();
+    $("blk").textContent=d.blocked; if(d.ledger) rows(d.ledger);
+    if(d.model_hash) $("mhash").textContent=d.model_hash;
+    if(d.models) $("mlist").innerHTML=Object.values(d.models).map(m=>
+      '<div class="mrow"><span class="mn">'+esc(m.model)+'</span>'+
+      '<span class="md'+(m.digest?'':' none')+'">'+
+      esc(m.digest||"not pulled")+'</span></div>').join("");
+  }catch(e){}
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+</script>
+</body>
+</html>

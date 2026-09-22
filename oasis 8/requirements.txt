@@ -1,0 +1,73 @@
+# Install with:  pip install -r requirements.txt
+#
+# ---------------------------------------------------------------------------
+# Windows on ARM (Snapdragon X, Surface Pro 11, and similar)
+#
+# This list is unchanged on that hardware - the packages are the same. What
+# matters is WHICH PYTHON installs them.
+#
+# chromadb depends on onnxruntime, and onnxruntime publishes no win_arm64
+# wheel. On a native ARM64 Python the install fails at that dependency and
+# there is no flag that fixes it.
+#
+# Install the x86-64 build of Python from python.org (the "Windows installer
+# (64-bit)", NOT the ARM64 one) and create the virtual environment with that
+# interpreter. Windows runs it under emulation and pip then finds ordinary
+# win_amd64 wheels for everything here.
+#
+#     py -0p                                   # lists every Python and its path
+#     C:\path\to\x64\python.exe -m venv .venv
+#     .venv\Scripts\activate
+#     python -c "import platform; print(platform.machine())"   # must say AMD64
+#     pip install -r requirements.txt
+#
+# Ollama itself is a separate, native ARM64 download and is unaffected. It runs
+# CPU-only on this hardware - there is no GPU or NPU backend for Windows ARM -
+# so expect answers to take noticeably longer than on an Apple Silicon Mac.
+# ---------------------------------------------------------------------------
+
+# --- backend ---
+fastapi                 # the /login, /ask, /upload endpoints
+uvicorn                 # runs the FastAPI server
+python-multipart        # lets the server receive forms and uploaded files
+
+# --- retrieval ---
+chromadb                # vector database - stores and searches document chunks
+pypdf                   # reads text out of PDFs during ingestion
+
+# --- configuration ---
+pyyaml                  # reads policy.yaml (accounts, levels, classifications)
+
+# --- models ---
+ollama                  # Python client for the local Ollama service
+                        # NOTE: the Ollama APP itself is a separate download
+                        # from ollama.com - this package only talks to it
+
+# --- document output ---
+python-docx             # generates .docx deliverables
+python-pptx             # generates .pptx presentations
+openpyxl                # generates .xlsx deliverables
+matplotlib              # renders charts as PNG from spreadsheet data
+
+# --- text recognition (OCR) - OPTIONAL ---
+# Recovers text from scanned PDFs and photographs. Large: paddlepaddle alone is
+# several hundred MB, and PaddleOCR fetches ~155 MB of models on first use.
+# The system runs without these - attachments with no text layer are simply
+# reported as unreadable.
+#
+# AIR-GAPPED MACHINES: download the models once, on a connected machine, into
+# the project folder, then copy the whole folder across:
+#
+#     python3 -c "from text_recog import prepare_offline; prepare_offline()"
+#
+# That writes them to oasis/ocr_models/. Without it PaddleOCR reaches for the
+# internet on first use, which fails on an air-gapped host and contradicts the
+# claim the system is built on.
+#
+# paddleocr
+# paddlepaddle
+# opencv-python
+# pymupdf
+
+# --- demo corpus ---
+reportlab               # only needed to regenerate the synthetic PDFs
