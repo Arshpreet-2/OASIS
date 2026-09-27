@@ -40,8 +40,3 @@ from `policy.yaml` — add an account there and it appears on the login screen.
 | `OWNERSHIP.md` | Who builds what, and in what order. |
 | `PUSH_TO_GITHUB.md` | Git setup and the daily workflow. |
 
-## What is real
-
-Password checking, clearance filtering applied inside the retrieval query,
-page-level citations, hash-chained tamper-evident ledger, human approval before
-any file is written, local inference with no external calls.
