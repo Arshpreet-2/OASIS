@@ -1,7 +1,5 @@
 # OASIS
 
-SIH 2026 · Problem statement SIH26117 · Sponsor: MRPL
-
 An on-premise AI workbench for confidential industrial documents. Runs entirely
 on the plant's own hardware with open-weight models — no cloud, no external
 calls.
